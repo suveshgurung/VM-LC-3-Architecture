@@ -14,7 +14,7 @@ enum {
   R_6,
   R_7,
   R_PC,
-  R_COND,
+  R_COND,     /* can contain the values COND_POS, COND_ZERO, COND_NEG */
   R_COUNT     /* total number of registers = 10 */
 };
 uint16_t registers[R_COUNT];
@@ -34,7 +34,14 @@ enum {
   OP_LDI,     /* LDI = 1 0 1 0 */
   OP_STI,     /* STI = 1 0 1 1 */
   OP_JMP,     /* RET = 1 1 0 0 */
-  OP_RES,     /* RES = 1 1 0 1 */
+  OP_RES,     /* RES = 1 1 0 1 (unused) */
   OP_LEA,     /* LEA = 1 1 1 0 */
   OP_TRAP     /* TRAP = 1 1 1 1 */
+};
+
+/* condition codes */
+enum {
+  COND_POS = 1 << 0,      /* P */
+  COND_ZERO = 1 << 1,     /* Z */
+  COND_NEG = 1 << 2      /* N */
 };
