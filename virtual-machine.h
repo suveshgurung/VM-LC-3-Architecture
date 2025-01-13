@@ -50,9 +50,17 @@ enum {
 
 
 /* structs */
-
+struct decoded_instruction {
+  uint16_t opcode;
+  uint16_t destination_register;
+  uint16_t first_source_register;
+  uint16_t second_source_register;
+  uint16_t immediate_value;
+};
 
 
 /* function prototypes */
-uint16_t decode_instruction(uint16_t instruction);
+struct decoded_instruction decode_instruction(uint16_t instruction);
 bool is_immediate_addressing_mode(uint16_t instruction);
+bool is_positive_immediate_value(uint16_t instruction);
+void add(uint16_t instruction);
