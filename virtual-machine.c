@@ -1,47 +1,32 @@
-#include <stdint.h>
+#include "virtual-machine.h"
+#include <stdio.h>
 
-#define MAX_MEMORY_SIZE (1 << 16)
-uint16_t memory[MAX_MEMORY_SIZE];     /* 65536 memory locations */
 
-/* registers */
-enum {
-  R_0,
-  R_1,
-  R_2,
-  R_3,
-  R_4,
-  R_5,
-  R_6,
-  R_7,
-  R_PC,
-  R_COND,     /* can contain the values COND_POS, COND_ZERO, COND_NEG */
-  R_COUNT     /* total number of registers = 10 */
-};
+uint16_t memory[MAX_MEMORY_SIZE];
 uint16_t registers[R_COUNT];
 
-/* opcodes */
-enum {
-  OP_BR = 0,  /* BR = 0 0 0 0 */
-  OP_ADD,     /* ADD = 0 0 0 1 */
-  OP_LD,      /* LD = 0 0 1 0 */
-  OP_ST,      /* ST = 0 0 1 1 */
-  OP_JSR,     /* JSR = 0 1 0 0 */
-  OP_AND,     /* AND = 0 1 0 1 */
-  OP_LDR,     /* LDR = 0 1 1 0 */
-  OP_STR,     /* STR = 0 1 1 1 */
-  OP_RTI,     /* RTI = 1 0 0 0 */
-  OP_NOT,     /* NOT = 1 0 0 1 */
-  OP_LDI,     /* LDI = 1 0 1 0 */
-  OP_STI,     /* STI = 1 0 1 1 */
-  OP_JMP,     /* RET = 1 1 0 0 */
-  OP_RES,     /* RES = 1 1 0 1 (unused) */
-  OP_LEA,     /* LEA = 1 1 1 0 */
-  OP_TRAP     /* TRAP = 1 1 1 1 */
-};
 
-/* condition codes */
-enum {
-  COND_POS = 1 << 0,      /* P */
-  COND_ZERO = 1 << 1,     /* Z */
-  COND_NEG = 1 << 2      /* N */
-};
+int main(int argc, char *argv[]) {
+  uint16_t instruction = 0b0101010011100000;
+  uint16_t opcode = decode_instruction(instruction);
+  if (opcode == OP_AND) {
+    printf("The opcode is a \"AND\" opcode!\n");
+    if (is_immediate_addressing_mode(instruction)) {
+      printf("The addressing mode is \"immediate\"\n");
+    }
+  }
+  return 0;
+}
+
+uint16_t decode_instruction(uint16_t instruction) {
+  uint16_t opcode = instruction >> 12;
+
+  return opcode;
+}
+
+bool is_immediate_addressing_mode(uint16_t instruction) {
+  if ((instruction >> 5) & 0x0001) {
+    return true;
+  }
+  return false;
+}
