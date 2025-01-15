@@ -47,6 +47,12 @@ enum {
   COND_NEG = 1 << 2       /* N */
 };
 
+/* instruction mode */
+enum {
+  MOD_REG,        /* register mode */
+  MOD_IMM         /* immediate mode */
+};
+
 
 
 /* structs */
@@ -56,11 +62,12 @@ struct decoded_instruction {
   uint16_t first_source_register;
   uint16_t second_source_register;
   uint16_t immediate_value;
+  uint8_t instruction_mode;
 };
 
 
 /* function prototypes */
-struct decoded_instruction decode_instruction(uint16_t instruction);
-bool is_immediate_addressing_mode(uint16_t instruction);
-bool is_positive_immediate_value(uint16_t instruction);
-void add(uint16_t instruction);
+struct decoded_instruction decode_instruction(uint16_t);
+bool is_immediate_addressing_mode(uint16_t);
+bool is_positive_immediate_value(uint16_t);
+void add(struct decoded_instruction);
