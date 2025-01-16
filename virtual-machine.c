@@ -5,11 +5,24 @@
 uint16_t memory[MAX_MEMORY_SIZE];
 uint16_t registers[R_COUNT] = { 0 };
 
+void bin(unsigned n)
+{
+    /* step 1 */
+    if (n > 1)
+        bin(n / 2);
+
+    /* step 2 */
+    printf("%d", n % 2);
+}
 
 int main(int argc, char *argv[]) {
   uint16_t instruction = 0b0001110010000110;
   registers[R_2] = 6;
-  registers[R_6] = 12;
+  registers[R_6] = -12;
+  bin(registers[R_2]);
+  printf("\n");
+  bin(registers[R_6]);
+  printf("\n");
   struct decoded_instruction d_instruction = decode_instruction(instruction);
   if (d_instruction.opcode == OP_ADD) {
     // printf("The opcode is a \"AND\" opcode!\n");
@@ -61,10 +74,30 @@ bool is_positive_immediate_value(uint16_t instruction) {
   return false;
 }
 
+bool is_negative_number(uint16_t number) {
+  if (!(number >> 15)) {
+    return true;
+  }
+  return false;
+}
+
+uint16_t conv_negative_to_positive_int(uint16_t negative_number) {
+  uint16_t ones_complement_number = ~negative_number;
+}
+
 void add(struct decoded_instruction d_instruction) {
   if (d_instruction.instruction_mode == MOD_IMM) {
+    // registers[d_instruction.destination_register] = registers[d_instruction.first_source_register] - conv_neg_to_pos_int(d_instruction.immediate_value);
     registers[d_instruction.destination_register] = registers[d_instruction.first_source_register] + d_instruction.immediate_value;
   } else if (d_instruction.instruction_mode == MOD_REG) {
-    registers[d_instruction.destination_register] = registers[d_instruction.first_source_register] + registers[d_instruction.second_source_register];
+    uint16_t first_operand = registers[d_instruction.first_source_register];
+    uint16_t second_operand = registers[d_instruction.second_source_register];
+    if (is_negative_number(first_operand)) {
+      first_operand = conv_negative_to_positive_int(first_operand);
+    }
+    if (is_negative_number(second_operand)) {
+      second_operand = conv_negative_to_positive_int(second_operand);
+    }
+    registers[d_instruction.destination_register] = first_operand + ;
   }
 }
