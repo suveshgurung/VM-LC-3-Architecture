@@ -16,9 +16,8 @@ void bin(unsigned n)
 }
 
 int main(int argc, char *argv[]) {
-  uint16_t instruction = 0b0001110010000110;
+  uint16_t instruction = 0b0001110010111110;
   registers[R_2] = 1;
-  registers[R_6] = -2;
   struct decoded_instruction d_instruction = decode_instruction(instruction);
 
   if (d_instruction.opcode == OP_ADD) {
@@ -43,11 +42,13 @@ struct decoded_instruction decode_instruction(uint16_t instruction) {
     if (is_positive_immediate_value(instruction)) {
       /* positive 2's complement integer. */
       d_instruction.immediate_value = instruction & 0x001f;
-    } else {
+    }
+    else {
       /* negative 2's complemet integer. */
       d_instruction.immediate_value = (instruction & 0x001f) | 0xffe0;
     }
-  } else {
+  }
+  else {
     d_instruction.instruction_mode = MOD_REG;
     d_instruction.second_source_register = instruction & 0x0007;
   }
@@ -87,9 +88,43 @@ uint16_t conv_negative_to_positive_int(uint16_t negative_number) {
 
 void add(struct decoded_instruction d_instruction) {
   if (d_instruction.instruction_mode == MOD_IMM) {
-    // registers[d_instruction.destination_register] = registers[d_instruction.first_source_register] - conv_neg_to_pos_int(d_instruction.immediate_value);
-    registers[d_instruction.destination_register] = registers[d_instruction.first_source_register] + d_instruction.immediate_value;
-  } else if (d_instruction.instruction_mode == MOD_REG) {
+    struct signed_number first_operand;
+    struct signed_number second_operand;
+
+    first_operand.number = registers[d_instruction.first_source_register];
+    second_operand.number = d_instruction.immediate_value;
+
+    if (is_negative_number(first_operand.number)) {
+      first_operand.number = conv_negative_to_positive_int(first_operand.number);
+      first_operand.positive = false;
+    }
+    else {
+      first_operand.positive = true;
+    }
+
+    if (is_negative_number(second_operand.number)) {
+      second_operand.number = conv_negative_to_positive_int(second_operand.number);
+      second_operand.positive = false;
+    }
+    else {
+      second_operand.positive = true;
+    }
+
+    if (!first_operand.positive && !second_operand.positive) {
+      registers[d_instruction.destination_register] = - first_operand.number - second_operand.number;
+    }
+    else if (!first_operand.positive && second_operand.positive) {
+      registers[d_instruction.destination_register] = - first_operand.number + second_operand.number;
+    }
+    else if (first_operand.positive && !second_operand.positive) {
+      registers[d_instruction.destination_register] = first_operand.number - second_operand.number;
+    }
+    else {
+      registers[d_instruction.destination_register] = first_operand.number + second_operand.number;
+    }
+
+  }
+  else if (d_instruction.instruction_mode == MOD_REG) {
     struct signed_number first_operand;
     struct signed_number second_operand;
 
@@ -99,23 +134,29 @@ void add(struct decoded_instruction d_instruction) {
     if (is_negative_number(first_operand.number)) {
       first_operand.number = conv_negative_to_positive_int(first_operand.number);
       first_operand.positive = false;
-    } else {
+    }
+    else {
       first_operand.positive = true;
     }
+
     if (is_negative_number(second_operand.number)) {
       second_operand.number = conv_negative_to_positive_int(second_operand.number);
       second_operand.positive = false;
-    } else {
+    }
+    else {
       second_operand.positive = true;
     }
 
     if (!first_operand.positive && !second_operand.positive) {
       registers[d_instruction.destination_register] = - first_operand.number - second_operand.number;
-    } else if (!first_operand.positive && second_operand.positive) {
+    }
+    else if (!first_operand.positive && second_operand.positive) {
       registers[d_instruction.destination_register] = - first_operand.number + second_operand.number;
-    } else if (first_operand.positive && !second_operand.positive) {
+    }
+    else if (first_operand.positive && !second_operand.positive) {
       registers[d_instruction.destination_register] = first_operand.number - second_operand.number;
-    } else {
+    }
+    else {
       registers[d_instruction.destination_register] = first_operand.number + second_operand.number;
     }
   }
