@@ -17,20 +17,17 @@ void bin(unsigned n)
 
 int main(int argc, char *argv[]) {
   uint16_t instruction = 0b0001110010000110;
-  registers[R_2] = 6;
-  registers[R_6] = -12;
-  bin(registers[R_2]);
-  printf("\n");
-  bin(registers[R_6]);
-  printf("\n");
+  registers[R_2] = 1;
+  registers[R_6] = -2;
   struct decoded_instruction d_instruction = decode_instruction(instruction);
+
   if (d_instruction.opcode == OP_ADD) {
-    // printf("The opcode is a \"AND\" opcode!\n");
-    // if (d_instruction.instruction_mode == I_IMM) {
-    //   printf("The addressing mode is \"immediate\"\n");
-    // }
     add(d_instruction);
     printf("Result of add: %d\n", registers[R_6]);
+    bin(registers[R_6]);
+    printf("\n");
+    bin(conv_negative_to_positive_int(registers[R_6]));
+    printf("\n");
   }
   return 0;
 }
@@ -75,7 +72,7 @@ bool is_positive_immediate_value(uint16_t instruction) {
 }
 
 bool is_negative_number(uint16_t number) {
-  if (!(number >> 15)) {
+  if ((number >> 15)) {
     return true;
   }
   return false;
@@ -83,6 +80,9 @@ bool is_negative_number(uint16_t number) {
 
 uint16_t conv_negative_to_positive_int(uint16_t negative_number) {
   uint16_t ones_complement_number = ~negative_number;
+  uint16_t positive_number = ones_complement_number + 0x0001;       /* calculate the 2's complement */
+
+  return positive_number;
 }
 
 void add(struct decoded_instruction d_instruction) {
@@ -90,14 +90,33 @@ void add(struct decoded_instruction d_instruction) {
     // registers[d_instruction.destination_register] = registers[d_instruction.first_source_register] - conv_neg_to_pos_int(d_instruction.immediate_value);
     registers[d_instruction.destination_register] = registers[d_instruction.first_source_register] + d_instruction.immediate_value;
   } else if (d_instruction.instruction_mode == MOD_REG) {
-    uint16_t first_operand = registers[d_instruction.first_source_register];
-    uint16_t second_operand = registers[d_instruction.second_source_register];
-    if (is_negative_number(first_operand)) {
-      first_operand = conv_negative_to_positive_int(first_operand);
+    struct signed_number first_operand;
+    struct signed_number second_operand;
+
+    first_operand.number = registers[d_instruction.first_source_register];
+    second_operand.number = registers[d_instruction.second_source_register];
+
+    if (is_negative_number(first_operand.number)) {
+      first_operand.number = conv_negative_to_positive_int(first_operand.number);
+      first_operand.positive = false;
+    } else {
+      first_operand.positive = true;
     }
-    if (is_negative_number(second_operand)) {
-      second_operand = conv_negative_to_positive_int(second_operand);
+    if (is_negative_number(second_operand.number)) {
+      second_operand.number = conv_negative_to_positive_int(second_operand.number);
+      second_operand.positive = false;
+    } else {
+      second_operand.positive = true;
     }
-    registers[d_instruction.destination_register] = first_operand + ;
+
+    if (!first_operand.positive && !second_operand.positive) {
+      registers[d_instruction.destination_register] = - first_operand.number - second_operand.number;
+    } else if (!first_operand.positive && second_operand.positive) {
+      registers[d_instruction.destination_register] = - first_operand.number + second_operand.number;
+    } else if (first_operand.positive && !second_operand.positive) {
+      registers[d_instruction.destination_register] = first_operand.number - second_operand.number;
+    } else {
+      registers[d_instruction.destination_register] = first_operand.number + second_operand.number;
+    }
   }
 }
