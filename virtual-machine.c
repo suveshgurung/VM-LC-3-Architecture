@@ -18,6 +18,7 @@ void bin(unsigned n)
 int main(int argc, char *argv[]) {
   uint16_t instruction = 0b0001110010111110;
   registers[R_2] = 1;
+  registers[R_6] = -101;
   struct decoded_instruction d_instruction = decode_instruction(instruction);
 
   if (d_instruction.opcode == OP_ADD) {
@@ -88,76 +89,16 @@ uint16_t conv_negative_to_positive_int(uint16_t negative_number) {
 
 void add(struct decoded_instruction d_instruction) {
   if (d_instruction.instruction_mode == MOD_IMM) {
-    struct signed_number first_operand;
-    struct signed_number second_operand;
+    uint16_t first_operand = registers[d_instruction.first_source_register];
+    uint16_t second_operand = d_instruction.immediate_value;
 
-    first_operand.number = registers[d_instruction.first_source_register];
-    second_operand.number = d_instruction.immediate_value;
-
-    if (is_negative_number(first_operand.number)) {
-      first_operand.number = conv_negative_to_positive_int(first_operand.number);
-      first_operand.positive = false;
-    }
-    else {
-      first_operand.positive = true;
-    }
-
-    if (is_negative_number(second_operand.number)) {
-      second_operand.number = conv_negative_to_positive_int(second_operand.number);
-      second_operand.positive = false;
-    }
-    else {
-      second_operand.positive = true;
-    }
-
-    if (!first_operand.positive && !second_operand.positive) {
-      registers[d_instruction.destination_register] = - first_operand.number - second_operand.number;
-    }
-    else if (!first_operand.positive && second_operand.positive) {
-      registers[d_instruction.destination_register] = - first_operand.number + second_operand.number;
-    }
-    else if (first_operand.positive && !second_operand.positive) {
-      registers[d_instruction.destination_register] = first_operand.number - second_operand.number;
-    }
-    else {
-      registers[d_instruction.destination_register] = first_operand.number + second_operand.number;
-    }
+    registers[d_instruction.destination_register] = first_operand + second_operand;
 
   }
   else if (d_instruction.instruction_mode == MOD_REG) {
-    struct signed_number first_operand;
-    struct signed_number second_operand;
+    uint16_t first_operand = registers[d_instruction.first_source_register];
+    uint16_t second_operand = registers[d_instruction.second_source_register];
 
-    first_operand.number = registers[d_instruction.first_source_register];
-    second_operand.number = registers[d_instruction.second_source_register];
-
-    if (is_negative_number(first_operand.number)) {
-      first_operand.number = conv_negative_to_positive_int(first_operand.number);
-      first_operand.positive = false;
-    }
-    else {
-      first_operand.positive = true;
-    }
-
-    if (is_negative_number(second_operand.number)) {
-      second_operand.number = conv_negative_to_positive_int(second_operand.number);
-      second_operand.positive = false;
-    }
-    else {
-      second_operand.positive = true;
-    }
-
-    if (!first_operand.positive && !second_operand.positive) {
-      registers[d_instruction.destination_register] = - first_operand.number - second_operand.number;
-    }
-    else if (!first_operand.positive && second_operand.positive) {
-      registers[d_instruction.destination_register] = - first_operand.number + second_operand.number;
-    }
-    else if (first_operand.positive && !second_operand.positive) {
-      registers[d_instruction.destination_register] = first_operand.number - second_operand.number;
-    }
-    else {
-      registers[d_instruction.destination_register] = first_operand.number + second_operand.number;
-    }
+    registers[d_instruction.destination_register] = first_operand + second_operand;
   }
 }

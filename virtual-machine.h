@@ -65,10 +65,6 @@ struct decoded_instruction {
   uint8_t instruction_mode;
 };
 
-struct signed_number {
-  uint16_t number;
-  bool positive;
-};
 
 
 /* function prototypes */
