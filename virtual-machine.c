@@ -23,12 +23,7 @@ int main(int argc, char *argv[]) {
 
   if (d_instruction.opcode == OP_ADD) {
     add(d_instruction);
-    if (is_negative_number(registers[d_instruction.destination_register])) {
-      printf("Result of add: -%d\n", conv_negative_to_positive_int(registers[d_instruction.destination_register]));
-    }
-    else {
-      printf("Result of add: %d\n", registers[d_instruction.destination_register]);
-    }
+    print_add_result(d_instruction);
   }
   return 0;
 }
@@ -99,4 +94,13 @@ void add(struct decoded_instruction d_instruction) {
   }
 
   registers[d_instruction.destination_register] = first_operand + second_operand;
+}
+
+void print_add_result(struct decoded_instruction d_instruction) {
+  if (is_negative_number(registers[d_instruction.destination_register])) {
+    printf("Result of add: -%d\n", conv_negative_to_positive_int(registers[d_instruction.destination_register]));
+  }
+  else {
+    printf("Result of add: %d\n", registers[d_instruction.destination_register]);
+  }
 }

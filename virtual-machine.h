@@ -74,3 +74,4 @@ bool is_positive_immediate_value(uint16_t);
 bool is_negative_number(uint16_t);
 uint16_t conv_negative_to_positive_int(uint16_t);
 void add(struct decoded_instruction);
+void print_add_result(struct decoded_instruction);
