@@ -16,18 +16,19 @@ void bin(unsigned n)
 }
 
 int main(int argc, char *argv[]) {
-  uint16_t instruction = 0b0001110010111110;
-  registers[R_2] = 1;
+  uint16_t instruction = 0b0001110010011110;
+  registers[R_2] = 69;
   registers[R_6] = -101;
   struct decoded_instruction d_instruction = decode_instruction(instruction);
 
   if (d_instruction.opcode == OP_ADD) {
     add(d_instruction);
-    printf("Result of add: %d\n", registers[R_6]);
-    bin(registers[R_6]);
-    printf("\n");
-    bin(conv_negative_to_positive_int(registers[R_6]));
-    printf("\n");
+    if (is_negative_number(registers[d_instruction.destination_register])) {
+      printf("Result of add: -%d\n", conv_negative_to_positive_int(registers[d_instruction.destination_register]));
+    }
+    else {
+      printf("Result of add: %d\n", registers[d_instruction.destination_register]);
+    }
   }
   return 0;
 }
@@ -88,17 +89,14 @@ uint16_t conv_negative_to_positive_int(uint16_t negative_number) {
 }
 
 void add(struct decoded_instruction d_instruction) {
+  uint16_t first_operand = registers[d_instruction.first_source_register];
+  uint16_t second_operand;
   if (d_instruction.instruction_mode == MOD_IMM) {
-    uint16_t first_operand = registers[d_instruction.first_source_register];
-    uint16_t second_operand = d_instruction.immediate_value;
-
-    registers[d_instruction.destination_register] = first_operand + second_operand;
-
+    second_operand = d_instruction.immediate_value;
   }
   else if (d_instruction.instruction_mode == MOD_REG) {
-    uint16_t first_operand = registers[d_instruction.first_source_register];
-    uint16_t second_operand = registers[d_instruction.second_source_register];
-
-    registers[d_instruction.destination_register] = first_operand + second_operand;
+    second_operand = registers[d_instruction.second_source_register];
   }
+
+  registers[d_instruction.destination_register] = first_operand + second_operand;
 }
