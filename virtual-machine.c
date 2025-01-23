@@ -16,14 +16,18 @@ void bin(unsigned n)
 }
 
 int main(int argc, char *argv[]) {
-  uint16_t instruction = 0b0001110010011110;
-  registers[R_2] = 69;
+  uint16_t instruction = 0b0101110010011110;
+  registers[R_2] = -69;
   registers[R_6] = -101;
   struct decoded_instruction d_instruction = decode_instruction(instruction);
 
   if (d_instruction.opcode == OP_ADD) {
-    add(d_instruction);
+    operate_add(d_instruction);
     print_add_result(d_instruction);
+  }
+  else if (d_instruction.opcode == OP_AND) {
+    operate_and(d_instruction);
+    print_and_result(d_instruction);
   }
   return 0;
 }
@@ -83,7 +87,7 @@ uint16_t conv_negative_to_positive_int(uint16_t negative_number) {
   return positive_number;
 }
 
-void add(struct decoded_instruction d_instruction) {
+void operate_add(struct decoded_instruction d_instruction) {
   uint16_t first_operand = registers[d_instruction.first_source_register];
   uint16_t second_operand;
   if (d_instruction.instruction_mode == MOD_IMM) {
@@ -102,5 +106,27 @@ void print_add_result(struct decoded_instruction d_instruction) {
   }
   else {
     printf("Result of add: %d\n", registers[d_instruction.destination_register]);
+  }
+}
+
+void operate_and(struct decoded_instruction d_instruction) {
+  uint16_t first_operand = registers[d_instruction.first_source_register];
+  uint16_t second_operand;
+  if (d_instruction.instruction_mode == MOD_IMM) {
+    second_operand = d_instruction.immediate_value;
+  }
+  else if (d_instruction.instruction_mode == MOD_REG) {
+    second_operand = registers[d_instruction.second_source_register];
+  }
+
+  registers[d_instruction.destination_register] = first_operand & second_operand;
+}
+
+void print_and_result(struct decoded_instruction d_instruction) {
+  if (is_negative_number(registers[d_instruction.destination_register])) {
+    printf("Result of and: -%d\n", conv_negative_to_positive_int(registers[d_instruction.destination_register]));
+  }
+  else {
+    printf("Result of and: %d\n", registers[d_instruction.destination_register]);
   }
 }
