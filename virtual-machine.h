@@ -59,10 +59,15 @@ enum {
 struct decoded_instruction {
   uint16_t opcode;
   uint16_t destination_register;
+
+  /* required by ADD, AND, & NOT instructions */
   uint16_t first_source_register;
   uint16_t second_source_register;
   uint16_t immediate_value;
   uint8_t instruction_mode;
+
+  /* required by LD instruction */
+  uint16_t mem_offset_value;
 };
 
 
@@ -71,9 +76,15 @@ struct decoded_instruction {
 struct decoded_instruction decode_instruction(uint16_t);
 bool is_immediate_addressing_mode(uint16_t);
 bool is_positive_immediate_value(uint16_t);
+bool is_positive_offset_value(uint16_t);
+
+/* temporariy needed by myself. not a necessity for the vm itself. */
 bool is_negative_number(uint16_t);
 uint16_t conv_negative_to_positive_int(uint16_t);
+/* */
+
 void operate_add(struct decoded_instruction);
 void print_add_result(struct decoded_instruction);
 void operate_and(struct decoded_instruction);
 void print_and_result(struct decoded_instruction);
+void operate_ld(struct decoded_instruction);
