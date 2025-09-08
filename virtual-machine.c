@@ -31,6 +31,9 @@ int main(int argc, char *argv[]) {
   else if (d_instruction.opcode == OP_LD) {
     operate_ld(d_instruction);
   }
+  else if (d_instruction.opcode == OP_BR) {
+    operate_br(d_instruction);
+  }
   return 0;
 }
 
@@ -39,35 +42,44 @@ struct decoded_instruction decode_instruction(uint16_t instruction) {
 
   /* common for all instructions. */
   d_instruction.opcode = instruction >> 12;
-  d_instruction.destination_register = (instruction >> 9) & 0x0007;
 
   switch (d_instruction.opcode) {
-  case OP_ADD:
-  case OP_AND:
-    d_instruction.first_source_register = (instruction >> 6) & 0x0007;
-    if (is_immediate_addressing_mode(instruction)) {
-      d_instruction.instruction_mode = MOD_IMM;
-      if (is_positive_immediate_value(instruction)) {
-        /* sign extended 16-bit positive 2's complement integer. */
-        d_instruction.immediate_value = instruction & 0x001f;
+    case OP_ADD:
+    case OP_AND:
+      d_instruction.destination_register = (instruction >> 9) & 0x0007;
+      d_instruction.first_source_register = (instruction >> 6) & 0x0007;
+      if (is_immediate_addressing_mode(instruction)) {
+        d_instruction.instruction_mode = MOD_IMM;
+        if (is_positive_immediate_value(instruction)) {
+          /* sign extended 16-bit positive 2's complement integer. */
+          d_instruction.immediate_value = instruction & 0x001f;
+        } else {
+          /* sign extended 16-bit negative 2's complement integer. */
+          d_instruction.immediate_value = (instruction & 0x001f) | 0xffe0;
+        }
       } else {
-        /* sign extended 16-bit negative 2's complement integer. */
-        d_instruction.immediate_value = (instruction & 0x001f) | 0xffe0;
+        d_instruction.instruction_mode = MOD_REG;
+        d_instruction.second_source_register = instruction & 0x0007;
       }
-    } else {
-      d_instruction.instruction_mode = MOD_REG;
-      d_instruction.second_source_register = instruction & 0x0007;
-    }
-    break;
-  case OP_LD:
-    if (is_positive_offset_value(instruction)) {
-      d_instruction.mem_offset_value = instruction & 0x01ff;
-    } else {
-      d_instruction.mem_offset_value = (instruction & 0x01ff) | 0xfe00;
-    }
-    break;
-  default:
-    break;
+      break;
+    case OP_LD:
+      d_instruction.destination_register = (instruction >> 9) & 0x0007;
+      if (is_positive_offset_value(instruction)) {
+        d_instruction.mem_offset_value = instruction & 0x01ff;
+      } else {
+        d_instruction.mem_offset_value = (instruction & 0x01ff) | 0xfe00;
+      }
+      break;
+    case OP_BR:
+      d_instruction.br_condition = (instruction >> 9) & 0x0007;
+      if (is_positive_offset_value(instruction)) {
+        d_instruction.mem_offset_value = instruction & 0x01ff;
+      } else {
+        d_instruction.mem_offset_value = (instruction & 0x01ff) | 0xfe00;
+      }
+      break;
+    default:
+      break;
   }
 
   return d_instruction;
@@ -162,13 +174,20 @@ void print_and_result(struct decoded_instruction d_instruction) {
 }
 
 void operate_ld(struct decoded_instruction d_instruction) {
-  if (is_negative_number(d_instruction.mem_offset_value)) {
-    printf("Memory offset value: -%d\n", conv_negative_to_positive_int(d_instruction.mem_offset_value));
-  }
-  else {
-    printf("Memory offset value: %d\n", d_instruction.mem_offset_value);
-  }
+  // if (is_negative_number(d_instruction.mem_offset_value)) {
+  //   printf("Memory offset value: -%d\n", conv_negative_to_positive_int(d_instruction.mem_offset_value));
+  // }
+  // else {
+  //   printf("Memory offset value: %d\n", d_instruction.mem_offset_value);
+  // }
   registers[d_instruction.destination_register] = memory[R_PC + d_instruction.mem_offset_value];
 
   printf("Value in the register: %d\n", registers[d_instruction.destination_register]);
+}
+
+void operate_br(struct decoded_instruction d_instruction) {
+  /* if (check_br_condition(d_instruction.br_condition)) {
+   *  registers[R_PC] = registers[R_PC] + d_instruction.mem_offset_value;
+   * }
+  */
 }
