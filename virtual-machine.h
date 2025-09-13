@@ -90,5 +90,6 @@ void operate_add(struct decoded_instruction);
 void print_add_result(struct decoded_instruction);
 void operate_and(struct decoded_instruction);
 void print_and_result(struct decoded_instruction);
+void operate_not(struct decoded_instruction);
 void operate_ld(struct decoded_instruction);
 void operate_br(struct decoded_instruction);

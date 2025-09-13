@@ -15,8 +15,9 @@ void bin(unsigned n) {
 
 int main(int argc, char *argv[]) {
   // uint16_t instruction = 0b0001110010111100;
-  uint16_t instruction = 0b0010010111111001;
-  registers[R_2] = -69;
+  // uint16_t instruction = 0b0010010111111001;
+  uint16_t instruction = 0b1001010010111111;
+  registers[R_2] = 69;
   registers[R_6] = -101;
   struct decoded_instruction d_instruction = decode_instruction(instruction);
 
@@ -27,6 +28,9 @@ int main(int argc, char *argv[]) {
   else if (d_instruction.opcode == OP_AND) {
     operate_and(d_instruction);
     print_and_result(d_instruction);
+  }
+  else if (d_instruction.opcode == OP_NOT) {
+    operate_not(d_instruction);
   }
   else if (d_instruction.opcode == OP_LD) {
     operate_ld(d_instruction);
@@ -57,16 +61,22 @@ struct decoded_instruction decode_instruction(uint16_t instruction) {
           /* sign extended 16-bit negative 2's complement integer. */
           d_instruction.immediate_value = (instruction & 0x001f) | 0xffe0;
         }
-      } else {
+      }
+      else {
         d_instruction.instruction_mode = MOD_REG;
         d_instruction.second_source_register = instruction & 0x0007;
       }
+      break;
+    case OP_NOT:
+      d_instruction.destination_register = (instruction >> 9) & 0x0007;
+      d_instruction.first_source_register = (instruction >> 6) & 0x0007;
       break;
     case OP_LD:
       d_instruction.destination_register = (instruction >> 9) & 0x0007;
       if (is_positive_offset_value(instruction)) {
         d_instruction.mem_offset_value = instruction & 0x01ff;
-      } else {
+      }
+      else {
         d_instruction.mem_offset_value = (instruction & 0x01ff) | 0xfe00;
       }
       break;
@@ -74,7 +84,8 @@ struct decoded_instruction decode_instruction(uint16_t instruction) {
       d_instruction.br_condition = (instruction >> 9) & 0x0007;
       if (is_positive_offset_value(instruction)) {
         d_instruction.mem_offset_value = instruction & 0x01ff;
-      } else {
+      } 
+      else {
         d_instruction.mem_offset_value = (instruction & 0x01ff) | 0xfe00;
       }
       break;
@@ -167,8 +178,24 @@ void print_and_result(struct decoded_instruction d_instruction) {
     printf("Result of and: -%d\n",
            conv_negative_to_positive_int(
                registers[d_instruction.destination_register]));
-  } else {
+  } 
+  else {
     printf("Result of and: %d\n",
+           registers[d_instruction.destination_register]);
+  }
+}
+
+void operate_not(struct decoded_instruction d_instruction) {
+  registers[d_instruction.destination_register] = ~registers[d_instruction.first_source_register];
+  // printf("Result of NOT: %d\n", registers[d_instruction.destination_register]);
+
+  if (is_negative_number(registers[d_instruction.destination_register])) {
+    printf("Result of not: -%d\n",
+           conv_negative_to_positive_int(
+               registers[d_instruction.destination_register]));
+  }
+  else {
+    printf("Result of not: %d\n",
            registers[d_instruction.destination_register]);
   }
 }
