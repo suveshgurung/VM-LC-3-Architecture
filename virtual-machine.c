@@ -134,7 +134,7 @@ bool is_negative_number(uint16_t number) {
 uint16_t conv_negative_to_positive_int(uint16_t negative_number) {
   uint16_t ones_complement_number = ~negative_number;
   uint16_t positive_number =
-      ones_complement_number + 0x0001; /* calculate the 2's complement */
+    ones_complement_number + 0x0001; /* calculate the 2's complement */
 
   return positive_number;
 }
@@ -157,7 +157,7 @@ void print_add_result(struct decoded_instruction d_instruction) {
   if (is_negative_number(registers[d_instruction.destination_register])) {
     printf("Result of add: -%d\n",
            conv_negative_to_positive_int(
-               registers[d_instruction.destination_register]));
+           registers[d_instruction.destination_register]));
   } else {
     printf("Result of add: %d\n",
            registers[d_instruction.destination_register]);
@@ -181,7 +181,7 @@ void print_and_result(struct decoded_instruction d_instruction) {
   if (is_negative_number(registers[d_instruction.destination_register])) {
     printf("Result of and: -%d\n",
            conv_negative_to_positive_int(
-               registers[d_instruction.destination_register]));
+           registers[d_instruction.destination_register]));
   } 
   else {
     printf("Result of and: %d\n",
@@ -196,7 +196,7 @@ void operate_not(struct decoded_instruction d_instruction) {
   if (is_negative_number(registers[d_instruction.destination_register])) {
     printf("Result of not: -%d\n",
            conv_negative_to_positive_int(
-               registers[d_instruction.destination_register]));
+           registers[d_instruction.destination_register]));
   }
   else {
     printf("Result of not: %d\n",
@@ -224,5 +224,5 @@ void operate_br(struct decoded_instruction d_instruction) {
 }
 
 void operate_lea(struct decoded_instruction d_instruction) {
-  registers[d_instruction.destination_register] = registers[R_PC] = d_instruction.mem_offset_value;
+  registers[d_instruction.destination_register] = registers[R_PC] + d_instruction.mem_offset_value;
 }
