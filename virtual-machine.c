@@ -14,9 +14,9 @@ void bin(unsigned n) {
 }
 
 int main(int argc, char *argv[]) {
-  // uint16_t instruction = 0b0001110010111100;
+  uint16_t instruction = 0b0001110010111100;
   // uint16_t instruction = 0b0010010111111001;
-  uint16_t instruction = 0b1001010010111111;
+  // uint16_t instruction = 0b1001010010111111;
   registers[R_2] = 69;
   registers[R_6] = -101;
   struct decoded_instruction d_instruction = decode_instruction(instruction);
@@ -32,15 +32,16 @@ int main(int argc, char *argv[]) {
   else if (d_instruction.opcode == OP_NOT) {
     operate_not(d_instruction);
   }
+  else if (d_instruction.opcode == OP_LEA) {
+    operate_lea(d_instruction);
+  }
   else if (d_instruction.opcode == OP_LD) {
     operate_ld(d_instruction);
   }
   else if (d_instruction.opcode == OP_BR) {
     operate_br(d_instruction);
   }
-  else if (d_instruction.opcode == OP_LEA) {
-    operate_lea(d_instruction);
-  }
+
   return 0;
 }
 
@@ -53,44 +54,48 @@ struct decoded_instruction decode_instruction(uint16_t instruction) {
   switch (d_instruction.opcode) {
     case OP_ADD:
     case OP_AND:
-      d_instruction.destination_register = (instruction >> 9) & 0x0007;
-      d_instruction.first_source_register = (instruction >> 6) & 0x0007;
+      d_instruction.add_and_instruction.dest = (uint8_t)((instruction >> 9) & 0x0007);
+      d_instruction.add_and_instruction.src1 = (uint8_t)((instruction >> 6) & 0x0007);
       if (is_immediate_addressing_mode(instruction)) {
-        d_instruction.instruction_mode = MOD_IMM;
+        d_instruction.add_and_instruction.mode = (uint8_t)MOD_IMM;
         if (is_positive_immediate_value(instruction)) {
           /* sign extended 16-bit positive 2's complement integer. */
-          d_instruction.immediate_value = instruction & 0x001f;
-        } else {
+          d_instruction.add_and_instruction.src2 = instruction & 0x001f;
+        } 
+        else {
           /* sign extended 16-bit negative 2's complement integer. */
-          d_instruction.immediate_value = (instruction & 0x001f) | 0xffe0;
+          d_instruction.add_and_instruction.src2 = (instruction & 0x001f) | 0xffe0;
         }
       }
       else {
-        d_instruction.instruction_mode = MOD_REG;
-        d_instruction.second_source_register = instruction & 0x0007;
+        d_instruction.add_and_instruction.mode = MOD_REG;
+        d_instruction.add_and_instruction.src2 = instruction & 0x0007;
       }
       break;
     case OP_NOT:
-      d_instruction.destination_register = (instruction >> 9) & 0x0007;
-      d_instruction.first_source_register = (instruction >> 6) & 0x0007;
+      d_instruction.not_instruction.dest = (uint8_t)((instruction >> 9) & 0x0007);
+      d_instruction.not_instruction.src = (uint8_t)((instruction >> 6) & 0x0007);
       break;
-    case OP_LD:
     case OP_LEA:
-      d_instruction.destination_register = (instruction >> 9) & 0x0007;
+    case OP_LD:
+      d_instruction.ld_lea_instruction.dest = (uint8_t)((instruction >> 9) & 0x0007);
       if (is_positive_offset_value(instruction)) {
-        d_instruction.mem_offset_value = instruction & 0x01ff;
+        d_instruction.ld_lea_instruction.offset = instruction & 0x01ff;
       }
       else {
-        d_instruction.mem_offset_value = (instruction & 0x01ff) | 0xfe00;
+        d_instruction.ld_lea_instruction.offset = (instruction & 0x01ff) | 0xfe00;
       }
       break;
+    // case OP_ST:
+    //   d_instruction.first_source_register = (instruction >> 9) | 0x0007;
+    //   break;
     case OP_BR:
-      d_instruction.br_condition = (instruction >> 9) & 0x0007;
+      d_instruction.br_instruction.condition = (uint8_t)((instruction >> 9) & 0x0007);
       if (is_positive_offset_value(instruction)) {
-        d_instruction.mem_offset_value = instruction & 0x01ff;
+        d_instruction.br_instruction.offset = instruction & 0x01ff;
       } 
       else {
-        d_instruction.mem_offset_value = (instruction & 0x01ff) | 0xfe00;
+        d_instruction.br_instruction.offset = (instruction & 0x01ff) | 0xfe00;
       }
       break;
     default:
@@ -141,88 +146,87 @@ uint16_t conv_negative_to_positive_int(uint16_t negative_number) {
 /* */
 
 void operate_add(struct decoded_instruction d_instruction) {
-  uint16_t first_operand = registers[d_instruction.first_source_register];
-  uint16_t second_operand;
-  if (d_instruction.instruction_mode == MOD_IMM) {
-    second_operand = d_instruction.immediate_value;
+  uint16_t first_operand = registers[d_instruction.add_and_instruction.src1];
+  uint16_t second_operand = 0;
+  if (d_instruction.add_and_instruction.mode == MOD_IMM) {
+    second_operand = d_instruction.add_and_instruction.src2;
   }
-  else if (d_instruction.instruction_mode == MOD_REG) {
-    second_operand = registers[d_instruction.second_source_register];
+  else if (d_instruction.add_and_instruction.mode == MOD_REG) {
+    second_operand = registers[d_instruction.add_and_instruction.src2];
   }
 
-  registers[d_instruction.destination_register] = first_operand + second_operand;
+  registers[d_instruction.add_and_instruction.dest] = first_operand + second_operand;
 }
 
 void print_add_result(struct decoded_instruction d_instruction) {
-  if (is_negative_number(registers[d_instruction.destination_register])) {
+  if (is_negative_number(registers[d_instruction.add_and_instruction.dest])) {
     printf("Result of add: -%d\n",
            conv_negative_to_positive_int(
-           registers[d_instruction.destination_register]));
+           registers[d_instruction.add_and_instruction.dest]));
   } else {
     printf("Result of add: %d\n",
-           registers[d_instruction.destination_register]);
+           registers[d_instruction.add_and_instruction.dest]);
   }
 }
 
 void operate_and(struct decoded_instruction d_instruction) {
-  uint16_t first_operand = registers[d_instruction.first_source_register];
-  uint16_t second_operand;
-  if (d_instruction.instruction_mode == MOD_IMM) {
-    second_operand = d_instruction.immediate_value;
+  uint16_t first_operand = registers[d_instruction.add_and_instruction.src1];
+  uint16_t second_operand = 0;
+  if (d_instruction.add_and_instruction.mode == MOD_IMM) {
+    second_operand = d_instruction.add_and_instruction.src2;
   }
-  else if (d_instruction.instruction_mode == MOD_REG) {
-    second_operand = registers[d_instruction.second_source_register];
+  else if (d_instruction.add_and_instruction.mode == MOD_REG) {
+    second_operand = registers[d_instruction.add_and_instruction.src2];
   }
 
-  registers[d_instruction.destination_register] = first_operand & second_operand;
+  registers[d_instruction.add_and_instruction.dest] = first_operand & second_operand;
 }
 
 void print_and_result(struct decoded_instruction d_instruction) {
-  if (is_negative_number(registers[d_instruction.destination_register])) {
+  if (is_negative_number(registers[d_instruction.add_and_instruction.dest])) {
     printf("Result of and: -%d\n",
            conv_negative_to_positive_int(
-           registers[d_instruction.destination_register]));
+           registers[d_instruction.add_and_instruction.dest]));
   } 
   else {
     printf("Result of and: %d\n",
-           registers[d_instruction.destination_register]);
+           registers[d_instruction.add_and_instruction.dest]);
   }
 }
 
 void operate_not(struct decoded_instruction d_instruction) {
-  registers[d_instruction.destination_register] = ~registers[d_instruction.first_source_register];
-  // printf("Result of NOT: %d\n", registers[d_instruction.destination_register]);
+  registers[d_instruction.not_instruction.dest] = ~registers[d_instruction.not_instruction.src];
 
-  if (is_negative_number(registers[d_instruction.destination_register])) {
+  if (is_negative_number(registers[d_instruction.not_instruction.dest])) {
     printf("Result of not: -%d\n",
            conv_negative_to_positive_int(
-           registers[d_instruction.destination_register]));
+           registers[d_instruction.not_instruction.dest]));
   }
   else {
     printf("Result of not: %d\n",
-           registers[d_instruction.destination_register]);
+           registers[d_instruction.not_instruction.dest]);
   }
 }
 
-void operate_ld(struct decoded_instruction d_instruction) {
-  // if (is_negative_number(d_instruction.mem_offset_value)) {
-  //   printf("Memory offset value: -%d\n", conv_negative_to_positive_int(d_instruction.mem_offset_value));
-  // }
-  // else {
-  //   printf("Memory offset value: %d\n", d_instruction.mem_offset_value);
-  // }
-  registers[d_instruction.destination_register] = memory[registers[R_PC] + d_instruction.mem_offset_value];
+void operate_lea(struct decoded_instruction d_instruction) {
+  registers[d_instruction.ld_lea_instruction.dest] = registers[R_PC] + d_instruction.ld_lea_instruction.offset;
+}
 
-  printf("Value in the register: %d\n", registers[d_instruction.destination_register]);
+void operate_ld(struct decoded_instruction d_instruction) {
+  registers[d_instruction.ld_lea_instruction.dest] = memory[registers[R_PC] + d_instruction.ld_lea_instruction.offset];
+
+  printf("Value in the register: %d\n", registers[d_instruction.ld_lea_instruction.dest]);
+}
+
+// void opearte_st(struct decoded_instruction d_instruction) {
+// }
+//
+bool check_br_condition(uint8_t condition) {
+  return true;
 }
 
 void operate_br(struct decoded_instruction d_instruction) {
-  /* if (check_br_condition(d_instruction.br_condition)) {
-   *  registers[R_PC] = registers[R_PC] + d_instruction.mem_offset_value;
-   * }
-  */
-}
-
-void operate_lea(struct decoded_instruction d_instruction) {
-  registers[d_instruction.destination_register] = registers[R_PC] + d_instruction.mem_offset_value;
+  if (check_br_condition(d_instruction.br_instruction.condition)) {
+    registers[R_PC] = registers[R_PC] + d_instruction.br_instruction.offset;
+  }
 }

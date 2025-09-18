@@ -57,20 +57,31 @@ enum {
 
 /* structs */
 struct decoded_instruction {
-  uint16_t opcode;
-  uint16_t destination_register;
+  uint8_t opcode;
 
-  /* required by ADD, AND, & NOT instructions */
-  uint16_t first_source_register;
-  uint16_t second_source_register;
-  uint16_t immediate_value;
-  uint8_t instruction_mode;
+  union {
+    struct {
+      uint8_t dest;
+      uint8_t src1;
+      uint16_t src2;
+      uint8_t mode;
+    } add_and_instruction;
 
-  /* required by LD, BR, and LEA instructions */
-  uint16_t mem_offset_value;
+    struct {
+      uint8_t dest;
+      uint8_t src;
+    } not_instruction;
 
-  /* required by BR instruction */
-  uint8_t br_condition; 
+    struct {
+      uint8_t dest;
+      uint16_t offset;
+    } ld_lea_instruction;
+
+    struct {
+      uint8_t condition;
+      uint16_t offset;
+    } br_instruction;
+  };
 };
 
 
@@ -86,11 +97,17 @@ bool is_negative_number(uint16_t);
 uint16_t conv_negative_to_positive_int(uint16_t);
 /* */
 
+/* operate instructions */
 void operate_add(struct decoded_instruction);
 void print_add_result(struct decoded_instruction);
 void operate_and(struct decoded_instruction);
 void print_and_result(struct decoded_instruction);
 void operate_not(struct decoded_instruction);
-void operate_ld(struct decoded_instruction);
-void operate_br(struct decoded_instruction);
 void operate_lea(struct decoded_instruction);
+
+/* data movement instructions */
+void operate_ld(struct decoded_instruction);
+void opearte_st(struct decoded_instruction);
+
+bool check_br_condition(uint8_t);
+void operate_br(struct decoded_instruction);
