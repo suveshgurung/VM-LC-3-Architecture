@@ -38,6 +38,9 @@ int main(int argc, char *argv[]) {
   else if (d_instruction.opcode == OP_BR) {
     operate_br(d_instruction);
   }
+  else if (d_instruction.opcode == OP_LEA) {
+    operate_lea(d_instruction);
+  }
   return 0;
 }
 
@@ -72,6 +75,7 @@ struct decoded_instruction decode_instruction(uint16_t instruction) {
       d_instruction.first_source_register = (instruction >> 6) & 0x0007;
       break;
     case OP_LD:
+    case OP_LEA:
       d_instruction.destination_register = (instruction >> 9) & 0x0007;
       if (is_positive_offset_value(instruction)) {
         d_instruction.mem_offset_value = instruction & 0x01ff;
@@ -207,7 +211,7 @@ void operate_ld(struct decoded_instruction d_instruction) {
   // else {
   //   printf("Memory offset value: %d\n", d_instruction.mem_offset_value);
   // }
-  registers[d_instruction.destination_register] = memory[R_PC + d_instruction.mem_offset_value];
+  registers[d_instruction.destination_register] = memory[registers[R_PC] + d_instruction.mem_offset_value];
 
   printf("Value in the register: %d\n", registers[d_instruction.destination_register]);
 }
@@ -217,4 +221,8 @@ void operate_br(struct decoded_instruction d_instruction) {
    *  registers[R_PC] = registers[R_PC] + d_instruction.mem_offset_value;
    * }
   */
+}
+
+void operate_lea(struct decoded_instruction d_instruction) {
+  registers[d_instruction.destination_register] = registers[R_PC] = d_instruction.mem_offset_value;
 }

@@ -66,7 +66,7 @@ struct decoded_instruction {
   uint16_t immediate_value;
   uint8_t instruction_mode;
 
-  /* required by LD and BR instructions */
+  /* required by LD, BR, and LEA instructions */
   uint16_t mem_offset_value;
 
   /* required by BR instruction */
@@ -93,3 +93,4 @@ void print_and_result(struct decoded_instruction);
 void operate_not(struct decoded_instruction);
 void operate_ld(struct decoded_instruction);
 void operate_br(struct decoded_instruction);
+void operate_lea(struct decoded_instruction);
