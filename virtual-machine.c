@@ -38,6 +38,9 @@ int main(int argc, char *argv[]) {
   else if (d_instruction.opcode == OP_LD) {
     operate_ld(d_instruction);
   }
+  else if (d_instruction.opcode == OP_ST) {
+    operate_st(d_instruction);
+  }
   else if (d_instruction.opcode == OP_BR) {
     operate_br(d_instruction);
   }
@@ -86,9 +89,15 @@ struct decoded_instruction decode_instruction(uint16_t instruction) {
         d_instruction.ld_lea_instruction.offset = (instruction & 0x01ff) | 0xfe00;
       }
       break;
-    // case OP_ST:
-    //   d_instruction.first_source_register = (instruction >> 9) | 0x0007;
-    //   break;
+    case OP_ST:
+      d_instruction.st_instruction.src = (uint8_t)((instruction >> 9) | 0x0007);
+      if (is_positive_offset_value(instruction)) {
+        d_instruction.st_instruction.offset = instruction & 0x01ff;
+      }
+      else {
+        d_instruction.st_instruction.offset = (instruction & 0x01ff) | 0xfe00;
+      }
+      break;
     case OP_BR:
       d_instruction.br_instruction.condition = (uint8_t)((instruction >> 9) & 0x0007);
       if (is_positive_offset_value(instruction)) {
@@ -218,9 +227,11 @@ void operate_ld(struct decoded_instruction d_instruction) {
   printf("Value in the register: %d\n", registers[d_instruction.ld_lea_instruction.dest]);
 }
 
-// void opearte_st(struct decoded_instruction d_instruction) {
-// }
-//
+void operate_st(struct decoded_instruction d_instruction) {
+  memory[registers[R_PC] + d_instruction.st_instruction.offset] = registers[d_instruction.st_instruction.src];
+}
+
+// TODO: write this function later on.
 bool check_br_condition(uint8_t condition) {
   return true;
 }
