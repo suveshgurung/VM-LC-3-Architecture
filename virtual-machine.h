@@ -75,12 +75,12 @@ struct decoded_instruction {
     struct {
       uint8_t dest;
       uint16_t offset;
-    } ld_lea_instruction;
+    } ld_ldi_lea_instruction;
 
     struct {
       uint8_t src;
       uint16_t offset;
-    } st_instruction;
+    } st_sti_instruction;
 
     struct {
       uint8_t condition;
@@ -112,7 +112,9 @@ void operate_lea(struct decoded_instruction);
 
 /* data movement instructions */
 void operate_ld(struct decoded_instruction);
+void operate_ldi(struct decoded_instruction);
 void operate_st(struct decoded_instruction);
+void operate_sti(struct decoded_instruction);
 
 bool check_br_condition(uint8_t);
 void operate_br(struct decoded_instruction);
