@@ -14,10 +14,11 @@ void bin(unsigned n) {
 }
 
 int main(int argc, char *argv[]) {
-  uint16_t instruction = 0b0001110010111100;
-  // uint16_t instruction = 0b0010010111111001;
+  // uint16_t instruction = 0b0001110010111100;
+  // uint16_t instruction = 0b0010010011111001;
   // uint16_t instruction = 0b1001010010111111;
-  registers[R_2] = 69;
+  uint16_t instruction = 0b0110001010111101;
+  registers[R_2] = 0x2345;
   registers[R_6] = -101;
   struct decoded_instruction d_instruction = decode_instruction(instruction);
 
@@ -41,11 +42,17 @@ int main(int argc, char *argv[]) {
   else if (d_instruction.opcode == OP_LDI) {
     operate_ldi(d_instruction);
   }
+  else if (d_instruction.opcode == OP_LDR) {
+    operate_ldr(d_instruction);
+  }
   else if (d_instruction.opcode == OP_ST) {
     operate_st(d_instruction);
   }
   else if (d_instruction.opcode == OP_STI) {
     operate_sti(d_instruction);
+  }
+  else if (d_instruction.opcode == OP_STR) {
+    operate_str(d_instruction);
   }
   else if (d_instruction.opcode == OP_BR) {
     operate_br(d_instruction);
@@ -89,17 +96,27 @@ struct decoded_instruction decode_instruction(uint16_t instruction) {
     case OP_LD:
     case OP_LDI:
       d_instruction.ld_ldi_lea_instruction.dest = (uint8_t)((instruction >> 9) & 0x0007);
-      if (is_positive_offset_value(instruction)) {
+      if (is_positive_offset_value(instruction, 9, 0)) {
         d_instruction.ld_ldi_lea_instruction.offset = instruction & 0x01ff;
       }
       else {
         d_instruction.ld_ldi_lea_instruction.offset = (instruction & 0x01ff) | 0xfe00;
       }
       break;
+    case OP_LDR:
+      d_instruction.ldr_instruction.dest = (uint8_t)((instruction >> 9) & 0x0007);
+      d_instruction.ldr_instruction.base = (uint8_t)((instruction >> 6) & 0x0007);
+      if (is_positive_offset_value(instruction, 6, 0)) {
+        d_instruction.ldr_instruction.offset = (instruction & 0x003f);
+      }
+      else {
+        d_instruction.ldr_instruction.offset = (instruction & 0x003f) | 0xffc0;
+      }
+      break;
     case OP_ST:
     case OP_STI:
       d_instruction.st_sti_instruction.src = (uint8_t)((instruction >> 9) | 0x0007);
-      if (is_positive_offset_value(instruction)) {
+      if (is_positive_offset_value(instruction, 9, 0)) {
         d_instruction.st_sti_instruction.offset = instruction & 0x01ff;
       }
       else {
@@ -108,7 +125,7 @@ struct decoded_instruction decode_instruction(uint16_t instruction) {
       break;
     case OP_BR:
       d_instruction.br_instruction.condition = (uint8_t)((instruction >> 9) & 0x0007);
-      if (is_positive_offset_value(instruction)) {
+      if (is_positive_offset_value(instruction, 9, 0)) {
         d_instruction.br_instruction.offset = instruction & 0x01ff;
       } 
       else {
@@ -138,11 +155,16 @@ bool is_positive_immediate_value(uint16_t instruction) {
   return false;
 }
 
-bool is_positive_offset_value(uint16_t instruction) {
-  if (!((instruction >> 8) & 0x0001)) {
+bool is_positive_offset_value(uint16_t instruction, int offset_bits, int offset_start) {
+  int sign_bit_position = offset_bits + offset_start - 1;
+  int sign_bit_mask = 1 << sign_bit_position;
+
+  if (!(instruction & sign_bit_mask)) {
     return true;
   }
-  return false;
+  else {
+    return false;
+  }
 }
 
 /* temporarily needed functions */
@@ -240,6 +262,11 @@ void operate_ldi(struct decoded_instruction d_instruction) {
   registers[d_instruction.ld_ldi_lea_instruction.dest] = memory[mem_address];
 }
 
+void operate_ldr(struct decoded_instruction d_instruction) {
+  uint16_t mem_address = registers[d_instruction.ldr_instruction.base] + d_instruction.ldr_instruction.offset;
+  registers[d_instruction.ldr_instruction.dest] = memory[mem_address];
+}
+
 void operate_st(struct decoded_instruction d_instruction) {
   memory[registers[R_PC] + d_instruction.st_sti_instruction.offset] = registers[d_instruction.st_sti_instruction.src];
 }
@@ -247,6 +274,9 @@ void operate_st(struct decoded_instruction d_instruction) {
 void operate_sti(struct decoded_instruction d_instruction) {
   uint16_t mem_address = memory[registers[R_PC] + d_instruction.st_sti_instruction.offset];
   memory[mem_address] = registers[d_instruction.st_sti_instruction.src];
+}
+
+void operate_str(struct decoded_instruction d_instruction) {
 }
 
 // TODO: write this function later on.

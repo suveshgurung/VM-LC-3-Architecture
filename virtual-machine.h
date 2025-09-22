@@ -83,6 +83,18 @@ struct decoded_instruction {
     } st_sti_instruction;
 
     struct {
+      uint8_t dest;
+      uint8_t base;
+      int16_t offset;
+    } ldr_instruction;
+
+    struct {
+      uint8_t src;
+      uint8_t base;
+      int16_t offset;
+    } str_instruction;
+
+    struct {
       uint8_t condition;
       uint16_t offset;
     } br_instruction;
@@ -95,7 +107,7 @@ struct decoded_instruction {
 struct decoded_instruction decode_instruction(uint16_t);
 bool is_immediate_addressing_mode(uint16_t);
 bool is_positive_immediate_value(uint16_t);
-bool is_positive_offset_value(uint16_t);
+bool is_positive_offset_value(uint16_t, int, int);
 
 /* temporariy needed by myself. not a necessity for the vm itself. */
 bool is_negative_number(uint16_t);
@@ -113,8 +125,10 @@ void operate_lea(struct decoded_instruction);
 /* data movement instructions */
 void operate_ld(struct decoded_instruction);
 void operate_ldi(struct decoded_instruction);
+void operate_ldr(struct decoded_instruction);
 void operate_st(struct decoded_instruction);
 void operate_sti(struct decoded_instruction);
+void operate_str(struct decoded_instruction);
 
 bool check_br_condition(uint8_t);
 void operate_br(struct decoded_instruction);
