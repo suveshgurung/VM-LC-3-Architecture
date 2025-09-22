@@ -123,6 +123,16 @@ struct decoded_instruction decode_instruction(uint16_t instruction) {
         d_instruction.st_sti_instruction.offset = (instruction & 0x01ff) | 0xfe00;
       }
       break;
+    case OP_STR:
+      d_instruction.str_instruction.src = (uint8_t)((instruction >> 9) & 0x0007);
+      d_instruction.str_instruction.base = (uint8_t)((instruction >> 6) & 0x0007);
+      if (is_positive_offset_value(instruction, 6, 0)) {
+        d_instruction.str_instruction.offset = (instruction & 0x003f);
+      }
+      else {
+        d_instruction.str_instruction.offset = (instruction & 0x003f) | 0xffc0;
+      }
+      break;
     case OP_BR:
       d_instruction.br_instruction.condition = (uint8_t)((instruction >> 9) & 0x0007);
       if (is_positive_offset_value(instruction, 9, 0)) {
@@ -277,6 +287,8 @@ void operate_sti(struct decoded_instruction d_instruction) {
 }
 
 void operate_str(struct decoded_instruction d_instruction) {
+  uint16_t mem_address = registers[d_instruction.str_instruction.base] + d_instruction.str_instruction.offset;
+  memory[mem_address] = registers[d_instruction.str_instruction.src];
 }
 
 // TODO: write this function later on.
