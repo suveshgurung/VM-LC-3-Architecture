@@ -85,13 +85,13 @@ struct decoded_instruction {
     struct {
       uint8_t dest;
       uint8_t base;
-      int16_t offset;
+      uint16_t offset;
     } ldr_instruction;
 
     struct {
       uint8_t src;
       uint8_t base;
-      int16_t offset;
+      uint16_t offset;
     } str_instruction;
 
     struct {
