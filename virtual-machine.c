@@ -16,8 +16,11 @@ void bin(unsigned n) {
 int main(int argc, char *argv[]) {
   // uint16_t instruction = 0b0101110010111100;
   // uint16_t instruction = 0b0010010011111001;
-  uint16_t instruction = 0b1001010010111111;
+  // uint16_t instruction = 0b1001010010111111;
   // uint16_t instruction = 0b0110001010111101;
+  uint16_t instruction = 0b0000101111110101;
+  registers[R_PC] = 0xffff;
+  registers[R_COND] = COND_ZERO;
   registers[R_2] = 0xffff;
   registers[R_6] = -101;
   struct decoded_instruction d_instruction = decode_instruction(instruction);
@@ -312,7 +315,33 @@ void operate_str(struct decoded_instruction d_instruction) {
 
 // TODO: write this function later on.
 bool check_br_condition(uint8_t condition) {
-  return true;
+  /* |2|1|0| */
+  /* |n|z|p| */
+  for (int shift = 0; shift <=2; shift++) {
+    if ((condition >> shift) & 0x01) {
+      switch (shift) {
+        case 0:
+          if (registers[R_COND] == COND_POS) {
+            return true;
+          }
+          break;
+        case 1:
+          if (registers[R_COND] == COND_ZERO) {
+            return true;
+          }
+          break;
+        case 2:
+          if (registers[R_COND] == COND_NEG) {
+            return true;
+          }
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  return false;
 }
 
 void operate_br(struct decoded_instruction d_instruction) {
