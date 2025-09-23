@@ -41,7 +41,7 @@ enum {
 };
 
 /* condition codes */
-enum {
+enum npz {
   COND_POS = 1 << 0,      /* P */
   COND_ZERO = 1 << 1,     /* Z */
   COND_NEG = 1 << 2       /* N */
@@ -74,8 +74,13 @@ struct decoded_instruction {
 
     struct {
       uint8_t dest;
+      uint8_t offset;
+    } lea_instruction;
+
+    struct {
+      uint8_t dest;
       uint16_t offset;
-    } ld_ldi_lea_instruction;
+    } ld_ldi_instruction;
 
     struct {
       uint8_t src;
@@ -105,12 +110,13 @@ struct decoded_instruction {
 
 /* function prototypes */
 struct decoded_instruction decode_instruction(uint16_t);
+enum npz check_npz(uint16_t);
 bool is_immediate_addressing_mode(uint16_t);
 bool is_positive_immediate_value(uint16_t);
 bool is_positive_offset_value(uint16_t, int, int);
+bool is_negative_number(uint16_t);
 
 /* temporariy needed by myself. not a necessity for the vm itself. */
-bool is_negative_number(uint16_t);
 uint16_t conv_negative_to_positive_int(uint16_t);
 /* */
 
@@ -120,6 +126,7 @@ void print_add_result(struct decoded_instruction);
 void operate_and(struct decoded_instruction);
 void print_and_result(struct decoded_instruction);
 void operate_not(struct decoded_instruction);
+void print_not_result(struct decoded_instruction);
 void operate_lea(struct decoded_instruction);
 
 /* data movement instructions */

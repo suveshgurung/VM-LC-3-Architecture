@@ -14,11 +14,11 @@ void bin(unsigned n) {
 }
 
 int main(int argc, char *argv[]) {
-  // uint16_t instruction = 0b0001110010111100;
+  // uint16_t instruction = 0b0101110010111100;
   // uint16_t instruction = 0b0010010011111001;
-  // uint16_t instruction = 0b1001010010111111;
-  uint16_t instruction = 0b0110001010111101;
-  registers[R_2] = 0x2345;
+  uint16_t instruction = 0b1001010010111111;
+  // uint16_t instruction = 0b0110001010111101;
+  registers[R_2] = 0xffff;
   registers[R_6] = -101;
   struct decoded_instruction d_instruction = decode_instruction(instruction);
 
@@ -32,6 +32,7 @@ int main(int argc, char *argv[]) {
   }
   else if (d_instruction.opcode == OP_NOT) {
     operate_not(d_instruction);
+    print_not_result(d_instruction);
   }
   else if (d_instruction.opcode == OP_LEA) {
     operate_lea(d_instruction);
@@ -95,12 +96,12 @@ struct decoded_instruction decode_instruction(uint16_t instruction) {
     case OP_LEA:
     case OP_LD:
     case OP_LDI:
-      d_instruction.ld_ldi_lea_instruction.dest = (uint8_t)((instruction >> 9) & 0x0007);
+      d_instruction.ld_ldi_instruction.dest = (uint8_t)((instruction >> 9) & 0x0007);
       if (is_positive_offset_value(instruction, 9, 0)) {
-        d_instruction.ld_ldi_lea_instruction.offset = instruction & 0x01ff;
+        d_instruction.ld_ldi_instruction.offset = instruction & 0x01ff;
       }
       else {
-        d_instruction.ld_ldi_lea_instruction.offset = (instruction & 0x01ff) | 0xfe00;
+        d_instruction.ld_ldi_instruction.offset = (instruction & 0x01ff) | 0xfe00;
       }
       break;
     case OP_LDR:
@@ -149,6 +150,18 @@ struct decoded_instruction decode_instruction(uint16_t instruction) {
   return d_instruction;
 }
 
+enum npz check_npz(uint16_t value) {
+  if (value == 0) {
+    return COND_ZERO;
+  }
+  else if (is_negative_number(value)) {
+    return COND_NEG;
+  }
+  else {
+    return COND_POS;
+  }
+}
+
 bool is_immediate_addressing_mode(uint16_t instruction) {
   /* bit 5 represents the mode */
   if ((instruction >> 5) & 0x0001) {
@@ -177,7 +190,6 @@ bool is_positive_offset_value(uint16_t instruction, int offset_bits, int offset_
   }
 }
 
-/* temporarily needed functions */
 bool is_negative_number(uint16_t number) {
   if ((number >> 15)) {
     return true;
@@ -185,6 +197,7 @@ bool is_negative_number(uint16_t number) {
   return false;
 }
 
+/* temporarily needed functions */
 uint16_t conv_negative_to_positive_int(uint16_t negative_number) {
   uint16_t ones_complement_number = ~negative_number;
   uint16_t positive_number =
@@ -205,6 +218,7 @@ void operate_add(struct decoded_instruction d_instruction) {
   }
 
   registers[d_instruction.add_and_instruction.dest] = first_operand + second_operand;
+  registers[R_COND] = check_npz(registers[d_instruction.add_and_instruction.dest]);
 }
 
 void print_add_result(struct decoded_instruction d_instruction) {
@@ -229,6 +243,7 @@ void operate_and(struct decoded_instruction d_instruction) {
   }
 
   registers[d_instruction.add_and_instruction.dest] = first_operand & second_operand;
+  registers[R_COND] = check_npz(registers[d_instruction.add_and_instruction.dest]);
 }
 
 void print_and_result(struct decoded_instruction d_instruction) {
@@ -245,7 +260,10 @@ void print_and_result(struct decoded_instruction d_instruction) {
 
 void operate_not(struct decoded_instruction d_instruction) {
   registers[d_instruction.not_instruction.dest] = ~registers[d_instruction.not_instruction.src];
+  registers[R_COND] = check_npz(registers[d_instruction.not_instruction.dest]);
+}
 
+void print_not_result(struct decoded_instruction d_instruction) {
   if (is_negative_number(registers[d_instruction.not_instruction.dest])) {
     printf("Result of not: -%d\n",
            conv_negative_to_positive_int(
@@ -258,23 +276,24 @@ void operate_not(struct decoded_instruction d_instruction) {
 }
 
 void operate_lea(struct decoded_instruction d_instruction) {
-  registers[d_instruction.ld_ldi_lea_instruction.dest] = registers[R_PC] + d_instruction.ld_ldi_lea_instruction.offset;
+  registers[d_instruction.lea_instruction.dest] = registers[R_PC] + d_instruction.lea_instruction.offset;
 }
 
 void operate_ld(struct decoded_instruction d_instruction) {
-  registers[d_instruction.ld_ldi_lea_instruction.dest] = memory[registers[R_PC] + d_instruction.ld_ldi_lea_instruction.offset];
-
-  printf("Value in the register: %d\n", registers[d_instruction.ld_ldi_lea_instruction.dest]);
+  registers[d_instruction.ld_ldi_instruction.dest] = memory[registers[R_PC] + d_instruction.ld_ldi_instruction.offset];
+  registers[R_COND] = check_npz(registers[d_instruction.ld_ldi_instruction.dest]);
 }
 
 void operate_ldi(struct decoded_instruction d_instruction) {
-  uint16_t mem_address = memory[registers[R_PC] + d_instruction.ld_ldi_lea_instruction.offset];
-  registers[d_instruction.ld_ldi_lea_instruction.dest] = memory[mem_address];
+  uint16_t mem_address = memory[registers[R_PC] + d_instruction.ld_ldi_instruction.offset];
+  registers[d_instruction.ld_ldi_instruction.dest] = memory[mem_address];
+  registers[R_COND] = check_npz(registers[d_instruction.ld_ldi_instruction.dest]);
 }
 
 void operate_ldr(struct decoded_instruction d_instruction) {
   uint16_t mem_address = registers[d_instruction.ldr_instruction.base] + d_instruction.ldr_instruction.offset;
   registers[d_instruction.ldr_instruction.dest] = memory[mem_address];
+  registers[R_COND] = check_npz(registers[d_instruction.ldr_instruction.dest]);
 }
 
 void operate_st(struct decoded_instruction d_instruction) {
