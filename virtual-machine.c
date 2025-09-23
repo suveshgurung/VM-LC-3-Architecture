@@ -61,6 +61,9 @@ int main(int argc, char *argv[]) {
   else if (d_instruction.opcode == OP_BR) {
     operate_br(d_instruction);
   }
+  else if (d_instruction.opcode == OP_JMP) {
+    operate_jmp(d_instruction);
+  }
 
   return 0;
 }
@@ -145,6 +148,9 @@ struct decoded_instruction decode_instruction(uint16_t instruction) {
       else {
         d_instruction.br_instruction.offset = (instruction & 0x01ff) | 0xfe00;
       }
+      break;
+    case OP_JMP:
+      d_instruction.jmp_instruction.src = (uint8_t)((instruction >> 6) & 0x0007);
       break;
     default:
       break;
@@ -313,7 +319,6 @@ void operate_str(struct decoded_instruction d_instruction) {
   memory[mem_address] = registers[d_instruction.str_instruction.src];
 }
 
-// TODO: write this function later on.
 bool check_br_condition(uint8_t condition) {
   /* |2|1|0| */
   /* |n|z|p| */
@@ -348,4 +353,9 @@ void operate_br(struct decoded_instruction d_instruction) {
   if (check_br_condition(d_instruction.br_instruction.condition)) {
     registers[R_PC] = registers[R_PC] + d_instruction.br_instruction.offset;
   }
+}
+
+void operate_jmp(struct decoded_instruction d_instruction) {
+  uint16_t new_pc = registers[d_instruction.jmp_instruction.src];
+  registers[R_PC] = new_pc;
 }

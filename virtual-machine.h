@@ -103,6 +103,10 @@ struct decoded_instruction {
       uint8_t condition;
       uint16_t offset;
     } br_instruction;
+
+    struct {
+      uint8_t src;
+    } jmp_instruction;
   };
 };
 
@@ -139,3 +143,4 @@ void operate_str(struct decoded_instruction);
 
 bool check_br_condition(uint8_t);
 void operate_br(struct decoded_instruction);
+void operate_jmp(struct decoded_instruction);
